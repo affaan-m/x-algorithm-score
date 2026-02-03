@@ -10,11 +10,17 @@
     "lint": "eslint src --ext ts,tsx",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["chrome-extension", "twitter", "x", "algorithm", "scoring"],
+  "keywords": [
+    "chrome-extension",
+    "twitter",
+    "x",
+    "algorithm",
+    "scoring"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.23",
+    "@crxjs/vite-plugin": "^2.3.0",
     "@types/chrome": "^0.0.260",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",

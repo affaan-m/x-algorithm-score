@@ -246,6 +246,7 @@ function init(): void {
   // Check if we're on X.com
   if (!window.location.hostname.includes('twitter.com') &&
       !window.location.hostname.includes('x.com')) {
+    console.log('[X Algorithm Score] Not on X.com, skipping');
     return;
   }
 
@@ -255,9 +256,23 @@ function init(): void {
   console.log('[X Algorithm Score] Ready!');
 }
 
-// Start when DOM is ready
+/**
+ * Export onExecute for CRXJS loader
+ * This is called by the CRXJS-generated loader script
+ */
+export function onExecute() {
+  console.log('[X Algorithm Score] onExecute called');
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+}
+
+// Also self-execute as fallback (for when loaded as regular script)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
-  init();
+  // Small delay to ensure DOM is ready
+  setTimeout(init, 0);
 }
