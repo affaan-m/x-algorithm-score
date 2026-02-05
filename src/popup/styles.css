@@ -75,3 +75,27 @@ input[type="checkbox"] {
   height: 16px;
   cursor: pointer;
 }
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visible styles for keyboard navigation */
+button:focus-visible,
+textarea:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #1DA1F2;
+  outline-offset: 2px;
+}
+
+/* Tab focus styles */
+nav[role="tablist"] button[role="tab"]:focus-visible {
+  background: rgba(29, 161, 242, 0.1);
+}

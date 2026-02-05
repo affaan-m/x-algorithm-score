@@ -176,6 +176,9 @@ export interface ExtensionSettings {
   minScoreAlert: number;
   darkMode: 'auto' | 'light' | 'dark';
   analyticsEnabled: boolean;
+  onboardingCompleted?: boolean;
+  aiConsentAccepted?: boolean;
+  animationsEnabled?: boolean;
 }
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
@@ -186,4 +189,9 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   minScoreAlert: 50,
   darkMode: 'auto',
   analyticsEnabled: false,
+  onboardingCompleted: false,
+  aiConsentAccepted: false,
+  animationsEnabled: true,
 };
+
+export * from './runtime';

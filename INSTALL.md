@@ -19,11 +19,9 @@ This guide covers all methods to install the X Algorithm Score Chrome extension.
 
 ### Step 1: Download
 
-Download the latest release from GitHub:
+Download the latest release from the GitHub **Releases** page for this repository.
 
-**[Download v0.1.0](https://github.com/affaan-m/x-algorithm-score/releases/latest)**
-
-Click on `x-algorithm-score-v0.1.0.zip` to download.
+Download the `.zip`, then extract it (you should see a `dist/` folder inside).
 
 ### Step 2: Extract
 
@@ -51,6 +49,9 @@ Click on `x-algorithm-score-v0.1.0.zip` to download.
 1. Navigate to [x.com](https://x.com)
 2. Click to compose a new tweet
 3. Start typing - you should see a score badge appear in the bottom-right corner
+4. If it doesn’t appear, open the extension popup → **Settings** and ensure:
+   - **Enable extension** is on
+   - **Show score while composing** is on
 
 ---
 
@@ -148,7 +149,10 @@ npm run build
 1. Make sure you're on `x.com` or `twitter.com`
 2. Try refreshing the page (Ctrl/Cmd + R)
 3. Check if the extension is enabled in `chrome://extensions/`
-4. Open DevTools (F12) → Console and look for `[X Algorithm Score]` messages
+4. Open the extension popup → **Settings** and ensure:
+   - **Enable extension** is on
+   - **Show score while composing** is on
+5. Open DevTools (F12) → Console and look for `[X Algorithm Score]` messages
 
 ### "Manifest file is missing or unreadable"
 
@@ -178,6 +182,7 @@ The scoring is based on publicly available algorithm information and may not per
 1. Make sure you've added your Claude API key in Settings
 2. Check that the API key is valid at [console.anthropic.com](https://console.anthropic.com)
 3. Ensure you have API credits available
+4. Note: AI analysis sends the draft tweet text to Anthropic when you click **Deep Analysis with AI**
 
 ### Need more help?
 
@@ -193,13 +198,14 @@ The scoring is based on publicly available algorithm information and may not per
 - **Permissions Required**:
   - `storage` - Save your settings locally
   - `activeTab` - Access the current tab to inject the overlay
-  - Host access to `x.com` and `twitter.com`
+  - Host access to `x.com`, `twitter.com`, and `mobile.twitter.com`
 
 ---
 
 ## Privacy Note
 
 - All scoring happens locally in your browser
-- No data is sent to external servers (except optional AI analysis using your own API key)
+- No data is sent to external servers (except optional AI analysis, which sends your draft tweet text to Anthropic using your API key)
 - No account information is accessed or stored
+- Optional local score history can be enabled in Settings (stored on-device only)
 - See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for full details

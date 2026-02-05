@@ -12,13 +12,21 @@ import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ScoreOverlay } from './components/ScoreOverlay';
 import { parseTweetFeatures, scoreTweet } from '../lib/scoring-engine';
-import type { DraftTweet, TweetScore } from '../types';
+import { sendRuntimeMessage } from '../lib/runtime';
+import { DEFAULT_SETTINGS, type DraftTweet, type ExtensionSettings, type TweetScore } from '../types';
 
-// Selectors for X.com UI elements
+// Debug mode - set to false for production
+const DEBUG = false;
+const log = (...args: unknown[]) => DEBUG && console.log('[X Algorithm Score]', ...args);
+
+// Selectors for X.com UI elements with fallbacks
 const SELECTORS = {
   composer: '[data-testid="tweetTextarea_0"]',
+  composerFallback: '[data-testid="tweetTextarea_0RichTextInputContainer"]',
+  composerAlt: 'div[role="textbox"][data-testid]',
   composerContainer: '[data-testid="toolBar"]',
   postButton: '[data-testid="tweetButtonInline"]',
+  postButtonAlt: '[data-testid="tweetButton"]',
   mediaInput: 'input[data-testid="fileInput"]',
   attachedMedia: '[data-testid="attachments"]',
   gifButton: '[data-testid="gifSearchButton"]',
@@ -26,11 +34,56 @@ const SELECTORS = {
   replyIndicator: '[data-testid="tweet"] [data-testid="reply"]',
 };
 
+/**
+ * Find composer element with fallback selectors
+ */
+function findComposer(): HTMLElement | null {
+  return (
+    document.querySelector(SELECTORS.composer) ||
+    document.querySelector(SELECTORS.composerFallback) ||
+    document.querySelector(SELECTORS.composerAlt)
+  ) as HTMLElement | null;
+}
+
 // State
 let currentScore: TweetScore | null = null;
 let overlayRoot: Root | null = null;
 let overlayContainer: HTMLDivElement | null = null;
 let debounceTimer: number | null = null;
+let currentSettings: ExtensionSettings = DEFAULT_SETTINGS;
+let composerObserver: MutationObserver | null = null;
+let toolbarObserver: MutationObserver | null = null;
+
+function logScoreOnPost(): void {
+  if (!currentSettings.analyticsEnabled) return;
+  if (!currentScore) return;
+
+  void sendRuntimeMessage({
+    type: 'LOG_SCORE',
+    payload: {
+      score: currentScore.overall,
+      predictedReach: currentScore.predictedReach,
+      timestamp: Date.now(),
+    },
+  }).catch(() => {
+    // Best-effort local logging; ignore failures
+  });
+}
+
+function attachPostListener(): void {
+  const postBtn = document.querySelector(SELECTORS.postButton) as HTMLElement | null;
+  if (!postBtn) return;
+  if ((postBtn as HTMLElement).dataset.xasPostListener === '1') return;
+
+  (postBtn as HTMLElement).dataset.xasPostListener = '1';
+  postBtn.addEventListener(
+    'click',
+    () => {
+      logScoreOnPost();
+    },
+    { capture: true }
+  );
+}
 
 /**
  * Create and inject the score overlay
@@ -60,9 +113,21 @@ function updateOverlay(score: TweetScore | null, isVisible: boolean): void {
 
   overlayRoot.render(
     <React.StrictMode>
-      <ScoreOverlay score={score} isVisible={isVisible} />
+      <ScoreOverlay
+        score={score}
+        isVisible={isVisible}
+        settings={{
+          showSuggestions: currentSettings.showSuggestions,
+          minScoreAlert: currentSettings.minScoreAlert,
+          animationsEnabled: currentSettings.animationsEnabled,
+        }}
+      />
     </React.StrictMode>
   );
+}
+
+function shouldShowOverlay(): boolean {
+  return currentSettings.enabled && currentSettings.showScoreInComposer;
 }
 
 /**
@@ -114,6 +179,11 @@ function detectQuoteTweet(): boolean {
  * Analyze the current draft tweet
  */
 function analyzeDraft(text: string): void {
+  if (!shouldShowOverlay()) {
+    updateOverlay(null, false);
+    return;
+  }
+
   const { hasMedia, mediaType, mediaCount } = detectMedia();
   const features = parseTweetFeatures(text);
 
@@ -137,6 +207,7 @@ function analyzeDraft(text: string): void {
 
   currentScore = scoreTweet(tweet);
   updateOverlay(currentScore, true);
+  attachPostListener();
 }
 
 /**
@@ -152,28 +223,53 @@ function handleComposerInput(event: Event): void {
   }
 
   debounceTimer = window.setTimeout(() => {
+    if (!shouldShowOverlay()) {
+      updateOverlay(null, false);
+      return;
+    }
     if (text.trim().length > 0) {
       analyzeDraft(text);
     } else {
-      updateOverlay(null, false);
+      // Keep overlay visible while composer is open (premium UX),
+      // but show an empty/ready state until the user types.
+      updateOverlay(null, true);
     }
   }, 150);
+}
+
+/**
+ * Check if node contains or is a composer
+ */
+function nodeHasComposer(node: HTMLElement): HTMLElement | null {
+  if (node.matches?.(SELECTORS.composer) ||
+      node.matches?.(SELECTORS.composerFallback) ||
+      node.matches?.(SELECTORS.composerAlt)) {
+    return node;
+  }
+  return (
+    node.querySelector(SELECTORS.composer) ||
+    node.querySelector(SELECTORS.composerFallback) ||
+    node.querySelector(SELECTORS.composerAlt)
+  ) as HTMLElement | null;
 }
 
 /**
  * Watch for composer to appear/disappear
  */
 function watchComposer(): void {
-  const observer = new MutationObserver((mutations) => {
+  // Clean up existing observer if any
+  if (composerObserver) {
+    composerObserver.disconnect();
+  }
+
+  composerObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       // Check for added nodes
       for (const node of mutation.addedNodes) {
         if (node instanceof HTMLElement) {
-          const composer = node.querySelector(SELECTORS.composer) ||
-            (node.matches(SELECTORS.composer) ? node : null);
-
+          const composer = nodeHasComposer(node);
           if (composer) {
-            setupComposerListeners(composer as HTMLElement);
+            setupComposerListeners(composer);
           }
         }
       }
@@ -181,33 +277,69 @@ function watchComposer(): void {
       // Check for removed nodes (composer closed)
       for (const node of mutation.removedNodes) {
         if (node instanceof HTMLElement) {
-          const hadComposer = node.querySelector(SELECTORS.composer) ||
-            node.matches(SELECTORS.composer);
-
+          const hadComposer = nodeHasComposer(node);
           if (hadComposer) {
             updateOverlay(null, false);
+            // Clean up toolbar observer when composer closes
+            if (toolbarObserver) {
+              toolbarObserver.disconnect();
+              toolbarObserver = null;
+            }
           }
         }
       }
     }
   });
 
-  observer.observe(document.body, {
+  composerObserver.observe(document.body, {
     childList: true,
     subtree: true,
   });
 
   // Also check for existing composer on load
-  const existingComposer = document.querySelector(SELECTORS.composer);
+  const existingComposer = findComposer();
   if (existingComposer) {
-    setupComposerListeners(existingComposer as HTMLElement);
+    setupComposerListeners(existingComposer);
   }
 }
 
 /**
- * Set up event listeners on the composer
+ * Cleanup function for when extension is unloaded
+ */
+function cleanup(): void {
+  if (composerObserver) {
+    composerObserver.disconnect();
+    composerObserver = null;
+  }
+  if (toolbarObserver) {
+    toolbarObserver.disconnect();
+    toolbarObserver = null;
+  }
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+  if (overlayRoot) {
+    overlayRoot.unmount();
+    overlayRoot = null;
+  }
+  if (overlayContainer) {
+    overlayContainer.remove();
+    overlayContainer = null;
+  }
+}
+
+/**
+ * Set up event listeners on composer
  */
 function setupComposerListeners(composer: HTMLElement): void {
+  log('Setting up composer listeners');
+
+  // Send composer detected message for onboarding
+  void sendRuntimeMessage({ type: 'COMPOSER_DETECTED' }).catch(() => {
+    // Best-effort; ignore failures
+  });
+
   // Remove any existing listeners
   composer.removeEventListener('input', handleComposerInput);
 
@@ -218,14 +350,25 @@ function setupComposerListeners(composer: HTMLElement): void {
   const text = composer.textContent || '';
   if (text.trim().length > 0) {
     analyzeDraft(text);
+  } else {
+    updateOverlay(null, shouldShowOverlay());
+    attachPostListener();
+  }
+
+  // Clean up existing toolbar observer
+  if (toolbarObserver) {
+    toolbarObserver.disconnect();
   }
 
   // Watch for media changes
-  const toolbarObserver = new MutationObserver(() => {
+  toolbarObserver = new MutationObserver(() => {
     const text = composer.textContent || '';
     if (text.trim().length > 0) {
       analyzeDraft(text);
+    } else {
+      updateOverlay(null, shouldShowOverlay());
     }
+    attachPostListener();
   });
 
   const toolbar = composer.closest('[data-testid="toolBar"]')?.parentElement;
@@ -241,19 +384,46 @@ function setupComposerListeners(composer: HTMLElement): void {
  * Initialize the extension
  */
 function init(): void {
-  console.log('[X Algorithm Score] Initializing...');
+  log('Initializing...');
 
   // Check if we're on X.com
   if (!window.location.hostname.includes('twitter.com') &&
       !window.location.hostname.includes('x.com')) {
-    console.log('[X Algorithm Score] Not on X.com, skipping');
+    log('Not on X.com, skipping');
     return;
   }
 
   createOverlay();
-  watchComposer();
 
-  console.log('[X Algorithm Score] Ready!');
+  // Load settings once; keep updated via storage change events
+  sendRuntimeMessage({ type: 'GET_SETTINGS' })
+    .then((settings) => {
+      currentSettings = settings;
+      watchComposer();
+    })
+    .catch(() => {
+      currentSettings = DEFAULT_SETTINGS;
+      watchComposer();
+    });
+
+  if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== 'local') return;
+      const next = changes.settings?.newValue as ExtensionSettings | undefined;
+      if (next) {
+        currentSettings = next;
+        // If user disables overlay while it is visible, hide it.
+        if (!shouldShowOverlay()) {
+          updateOverlay(null, false);
+        }
+      }
+    });
+  }
+
+  // Listen for page unload to cleanup
+  window.addEventListener('beforeunload', cleanup);
+
+  log('Ready!');
 }
 
 /**
@@ -261,7 +431,7 @@ function init(): void {
  * This is called by the CRXJS-generated loader script
  */
 export function onExecute() {
-  console.log('[X Algorithm Score] onExecute called');
+  log('onExecute called');
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

@@ -76,16 +76,47 @@ export async function getApiKey(): Promise<string | null> {
 }
 
 /**
- * Save API key to Chrome storage
+ * Validate API key format
+ * Claude API keys start with 'sk-ant-' and are typically 108+ characters
  */
-export async function saveApiKey(apiKey: string): Promise<void> {
+export function validateApiKey(apiKey: string): { valid: boolean; error?: string } {
+  if (!apiKey || apiKey.trim().length === 0) {
+    return { valid: false, error: 'API key cannot be empty' };
+  }
+
+  const trimmed = apiKey.trim();
+
+  if (!trimmed.startsWith('sk-ant-')) {
+    return { valid: false, error: 'Invalid API key format. Claude API keys start with "sk-ant-"' };
+  }
+
+  if (trimmed.length < 50) {
+    return { valid: false, error: 'API key appears too short. Please check you copied the full key.' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Save API key to Chrome storage (with validation)
+ */
+export async function saveApiKey(apiKey: string): Promise<{ success: boolean; error?: string }> {
+  const validation = validateApiKey(apiKey);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
   return new Promise((resolve) => {
     if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.set({ claudeApiKey: apiKey }, () => {
-        resolve();
+      chrome.storage.local.set({ claudeApiKey: apiKey.trim() }, () => {
+        if (chrome.runtime.lastError) {
+          resolve({ success: false, error: 'Failed to save API key. Storage may be full.' });
+        } else {
+          resolve({ success: true });
+        }
       });
     } else {
-      resolve();
+      resolve({ success: false, error: 'Storage not available' });
     }
   });
 }

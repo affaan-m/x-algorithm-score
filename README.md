@@ -1,6 +1,6 @@
 # X Algorithm Score
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/affaan-m/x-algorithm-score/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](#)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://developer.chrome.com/docs/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
@@ -9,7 +9,7 @@
 
 A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-sourced algorithm, providing instant scoring, actionable suggestions, and predicted reach estimates.
 
-![X Algorithm Score Banner](assets/screenshots/banner-placeholder.png)
+![X Algorithm Score](assets/icon-128.png)
 
 ---
 
@@ -50,21 +50,7 @@ A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-
 
 ## Screenshots
 
-### Score Overlay (Collapsed)
-![Score Badge](assets/screenshots/score-badge-placeholder.png)
-*The score badge appears in the bottom-right corner while composing*
-
-### Score Overlay (Expanded)
-![Score Expanded](assets/screenshots/score-expanded-placeholder.png)
-*Click to expand and see suggestions, breakdown, and algorithm factors*
-
-### Extension Popup
-![Popup Test Tab](assets/screenshots/popup-test-placeholder.png)
-*Test tweets offline and get AI-powered analysis*
-
-### Learn Tab
-![Learn Tab](assets/screenshots/popup-learn-placeholder.png)
-*Algorithm insights based on code analysis and community research*
+Screenshots are coming soon. (The repo currently ships icons in `assets/`, but not marketing screenshots yet.)
 
 ---
 
@@ -72,13 +58,21 @@ A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-
 
 ### Option 1: Download Release (Recommended)
 
-1. Download the latest release from [Releases](https://github.com/affaan-m/x-algorithm-score/releases)
+1. Download the latest release from the GitHub **Releases** page for this repository
 2. Unzip the downloaded file
 3. Open Chrome and navigate to `chrome://extensions/`
 4. Enable **Developer mode** (toggle in top-right corner)
 5. Click **Load unpacked**
 6. Select the unzipped `dist` folder
 7. Navigate to [x.com](https://x.com) and start composing!
+
+### First-run checklist (60 seconds)
+
+1. Pin the extension (puzzle icon → pin “X Algorithm Score”)
+2. Go to [x.com](https://x.com) → click compose
+3. If the overlay doesn’t show, open the popup → **Settings**:
+   - Enable extension
+   - Show score while composing
 
 ### Option 2: Build from Source
 
@@ -121,7 +115,16 @@ Click the extension icon (XS) to open the popup:
 |-----|-------------|
 | **Test** | Score tweets without being on X.com, includes AI analysis |
 | **Learn** | Algorithm insights and tips |
-| **Settings** | Configure API key for AI features |
+| **Settings** | Configure overlay + AI + history |
+
+### Settings
+
+- **Enable extension**: Master on/off
+- **Show score while composing**: Controls the overlay on `x.com`
+- **Show suggestions**: Toggle suggestions UI in the overlay
+- **Minimum score alert**: Shows a warning when score is below your target
+- **Score history (optional)**: If enabled, saves a local entry when you post
+- **Claude API key (optional)**: Enables AI analysis (sends draft text to Anthropic when triggered)
 
 ---
 
@@ -178,7 +181,7 @@ Enable deep analysis with Claude AI for enhanced feedback:
 - **Rewrite Suggestions** — AI-generated improvements
 - **Audience Analysis** — Who your tweet appeals to
 
-> **Note**: API key is stored locally. All analysis happens client-side.
+> **Note**: When you click the AI analysis button, your draft tweet text is sent to the Anthropic API using your locally-stored API key. The base score and suggestions are computed locally. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ---
 
@@ -257,11 +260,17 @@ npm run dev
 # Production build
 npm run build
 
+# Run tests
+npm run test
+
 # Type checking
 npm run type-check
 
 # Linting
 npm run lint
+
+# Full quality gate (typecheck + lint + test + build)
+npm run check
 ```
 
 ### Project Structure
@@ -310,6 +319,8 @@ Contributions are welcome! Please:
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup and guidelines.
 
 ### Understanding the Scoring
 
