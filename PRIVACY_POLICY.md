@@ -8,12 +8,11 @@ X Algorithm Score ("the Extension") is committed to protecting your privacy. Thi
 
 ## Data We Collect
 
-**We do not collect any data.** The Extension processes all information locally on your device.
+**We do not collect data to our own servers.** By default, the Extension processes tweet drafts locally on your device.
 
 ### Tweet Content
-- Tweet text you compose is analyzed **entirely in your browser**
-- No tweet content is ever sent to external servers
-- Analysis results are not stored or transmitted
+- **Local scoring**: The score and suggestions shown in the overlay are computed **entirely in your browser**.
+- **Optional AI analysis**: If you choose to use the “AI analysis” feature (and have configured an API key), the draft tweet text you provide is sent to **Anthropic’s API** to generate the AI feedback. This only happens when you explicitly trigger AI analysis.
 
 ### User Data
 - We do not access your X/Twitter account
@@ -29,7 +28,8 @@ X Algorithm Score ("the Extension") is committed to protecting your privacy. Thi
 
 The Extension stores minimal data locally using Chrome's storage API:
 - **Settings**: Your preference choices (e.g., display settings)
-- **Score History** (optional): If enabled, recent scores for your reference only
+- **Claude API key (optional)**: If you enter an API key for AI analysis, it is stored locally in Chrome storage on your device
+- **Score history (optional)**: If enabled, a small local history is saved when you post (used for your own reference only)
 
 This data:
 - Remains entirely on your device
@@ -38,7 +38,9 @@ This data:
 
 ## Third-Party Services
 
-The Extension does **not** communicate with any external services, APIs, or servers. All functionality is self-contained within your browser.
+The Extension may communicate with the following third-party service **only if you enable and use the AI analysis feature**:
+
+- **Anthropic API**: Used to generate AI-powered feedback. Requests include your draft tweet text and your API key in the request headers.
 
 ## Permissions Explained
 
@@ -48,12 +50,11 @@ The Extension requests these Chrome permissions:
 |------------|---------|
 | `storage` | Save your settings locally |
 | `activeTab` | Access the current X.com tab to analyze tweets |
-| `host_permissions` (x.com, twitter.com) | Inject the scoring overlay on X websites |
+| `host_permissions` (x.com, twitter.com, mobile.twitter.com) | Inject the scoring overlay on X websites |
 
 ## Open Source
 
-This Extension is open source. You can audit the complete source code to verify our privacy claims at:
-https://github.com/[your-repo]/x-algorithm-extension
+This Extension is open source. You can audit the complete source code in this repository to verify our privacy claims.
 
 ## Children's Privacy
 
@@ -66,8 +67,7 @@ We may update this privacy policy occasionally. Significant changes will be comm
 ## Contact
 
 For privacy concerns or questions:
-- Create an issue on our GitHub repository
-- Email: [your-email@example.com]
+- Create an issue on this repository
 
 ## Summary
 
@@ -76,7 +76,7 @@ For privacy concerns or questions:
 | Do you collect my tweets? | No |
 | Do you sell data? | No - we don't collect any |
 | Do you use analytics? | No |
-| Is my data sent anywhere? | No - everything is local |
+| Is my data sent anywhere? | Scoring is local; AI analysis (if used) sends draft text to Anthropic |
 | Is the code auditable? | Yes - fully open source |
 
 ---

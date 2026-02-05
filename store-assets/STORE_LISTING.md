@@ -29,7 +29,7 @@ We analyzed Twitter's open-sourced recommendation algorithm to understand what a
 
 🔒 **100% Private**
 • All analysis happens locally in your browser
-• No data sent anywhere
+• No data sent anywhere for local scoring
 • No authentication required
 • Open source - audit it yourself
 
@@ -52,7 +52,7 @@ Perfect for creators, marketers, and anyone who wants their tweets to be seen.
 ---
 
 📖 Based on research from twitter/the-algorithm
-🔓 Open source: github.com/[repo]
+🔓 Open source: **REPLACE_WITH_REPO_URL**
 🔒 Privacy-first: No data collection
 
 ## Category
@@ -80,10 +80,17 @@ English
 - tweet
 
 ## Support Email
-[your-email@example.com]
+REPLACE_WITH_SUPPORT_EMAIL
 
 ## Website
-[your-website.com]
+REPLACE_WITH_WEBSITE
 
 ## Privacy Policy URL
-https://github.com/[repo]/blob/main/PRIVACY_POLICY.md
+REPLACE_WITH_PRIVACY_POLICY_URL
+
+---
+
+## Notes before publishing
+
+- Replace all `REPLACE_WITH_...` placeholders above.
+- If you mention AI analysis in the listing, ensure it matches `PRIVACY_POLICY.md` (AI analysis sends draft text to Anthropic when triggered).

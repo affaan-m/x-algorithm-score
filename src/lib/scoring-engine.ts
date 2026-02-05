@@ -1,34 +1,29 @@
 /**
  * X Algorithm Scoring Engine
  *
- * Based on analysis of:
- * - twitter/the-algorithm (home-mixer, heavy-ranker)
- * - RETRIEVAL_SIGNALS.md & HomeGlobalParams.scala
- * - SimClusters (community detection)
- * - Community research (SuperX, TweetArchivist, creator discussions)
- * - Real-world user testing and Grok analysis
+ * This engine provides heuristic scoring for draft tweets based on analysis of:
+ * - xai-org/x-algorithm (open-source feed ranking pipeline)
+ * - twitter/the-algorithm (2023 open-source release)
+ * - Community research and creator best practices
  *
- * === CRITICAL ENGAGEMENT MULTIPLIERS (from algorithm code) ===
- * - Reply-to-reply (conversation): 75x baseline
- * - Direct replies: 13.5x to 27x baseline
- * - Quote tweets: Higher than retweets (adds commentary)
- * - Retweets: 1-2x baseline
- * - Likes: 0.5x baseline (LOWEST value)
+ * IMPORTANT: This is NOT the actual X ranking algorithm. It provides estimates
+ * based on known patterns and best practices.
  *
- * === NEGATIVE MULTIPLIERS (catastrophic) ===
- * - Reports: -369x (devastating)
- * - Blocks/mutes: -74x
- * - "Show me less": -74x
+ * === VERIFIED FROM xai-org/x-algorithm ===
+ * ✓ Multi-action prediction: Model predicts P(like), P(reply), P(repost), P(click), etc.
+ * ✓ Weighted combination: Final score = Σ(weight × P(action))
+ * ✓ Video duration gating: Videos need minimum duration to get VQV weight
+ * ✓ Author diversity: Repeated authors get exponentially decaying scores
+ * ✓ Out-of-network penalty: OON posts downweighted vs in-network
+ * ✓ Candidate isolation: Posts scored independently during inference
  *
- * === KEY DISCOVERIES FROM USER RESEARCH ===
- * 1. TweepCred score: Below 0.65 = only 3 tweets considered for distribution
- * 2. Dwell time: Users must stay >3 seconds or quality score drops
- * 3. Premium is critical: Non-Premium link posts get ZERO median engagement (March 2026+)
- * 4. Duplicate content detection: Penalizes templates, recycled content, AI-generated formats
- * 5. First 30 minutes: Critical window for engagement velocity
- * 6. Native video: 10x more engagement than text-only
- * 7. Shadow hierarchy: Early engagement mistakes create lasting "algorithmic debt"
- * 8. Positive sentiment: Grok AI scores tone - positive content distributed further
+ * === HEURISTIC ESTIMATES (from community research) ===
+ * ⚠ Specific multiplier values (75x, 13x, etc.) are NOT in public code
+ * ⚠ Link penalties, Premium effects, TweepCred thresholds are observed patterns
+ * ⚠ Dwell time, timing windows, sentiment scoring are informed guesses
+ * ⚠ Actual weight values (FAVORITE_WEIGHT, REPLY_WEIGHT, etc.) are not public
+ *
+ * See INSIGHTS_AUDIT.md for full source attribution.
  */
 
 import {
@@ -269,6 +264,42 @@ function calculateMediaScore(tweet: DraftTweet): number {
 }
 
 /**
+ * Get optimal posting time suggestion based on current time
+ */
+function getOptimalPostingTimeSuggestion(): string | null {
+  const now = new Date();
+  const hour = now.getUTCHours();
+  const dayOfWeek = now.getDay();
+
+  // Peak engagement windows (EST timezone)
+  const peakMorning = hour >= 13 && hour <= 17; // 9am-12pm EST
+  const peakEvening = hour >= 23 || hour <= 3;  // 7pm-11pm EST
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  if (peakMorning || peakEvening) {
+    return null; // Already in peak time
+  }
+
+  // Generate suggestion based on current time
+  if (hour >= 4 && hour < 13) {
+    // Early morning (before 9am EST)
+    return 'Peak hours are 9am-12pm and 7pm-10pm (EST). Consider scheduling for later.';
+  } else if (hour >= 17 && hour < 23) {
+    // Afternoon gap (12pm-7pm EST)
+    return 'Peak evening hours (7pm-10pm EST) are approaching. Consider waiting 1-2 hours for better reach.';
+  } else if (hour >= 3 && hour < 11) {
+    // Night/early morning
+    return 'Post during peak hours (9am-12pm or 7pm-10pm EST) for maximum engagement.';
+  }
+
+  if (isWeekend) {
+    return 'Weekdays typically see higher engagement for most content types.';
+  }
+
+  return null;
+}
+
+/**
  * Calculate timing score (0-15)
  * Based on optimal posting times and user's follower activity
  */
@@ -505,6 +536,18 @@ function generateSuggestions(
       category: 'engagement',
       message: 'Positive tone detected - good for distribution',
       impact: 'low',
+    });
+  }
+
+  // Timing optimization suggestion
+  const timingSuggestion = getOptimalPostingTimeSuggestion();
+  if (timingSuggestion && breakdown.timing < 12) {
+    suggestions.push({
+      type: 'neutral',
+      category: 'timing',
+      message: 'Not optimal posting time',
+      impact: 'low',
+      action: timingSuggestion,
     });
   }
 

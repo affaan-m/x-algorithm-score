@@ -1,6 +1,6 @@
 # X Algorithm Score
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/affaan-m/x-algorithm-score/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](#)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Chrome](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://developer.chrome.com/docs/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
@@ -9,7 +9,7 @@
 
 A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-sourced algorithm, providing instant scoring, actionable suggestions, and predicted reach estimates.
 
-![X Algorithm Score Banner](assets/screenshots/banner-placeholder.png)
+![X Algorithm Score](assets/icon-128.png)
 
 ---
 
@@ -50,21 +50,7 @@ A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-
 
 ## Screenshots
 
-### Score Overlay (Collapsed)
-![Score Badge](assets/screenshots/score-badge-placeholder.png)
-*The score badge appears in the bottom-right corner while composing*
-
-### Score Overlay (Expanded)
-![Score Expanded](assets/screenshots/score-expanded-placeholder.png)
-*Click to expand and see suggestions, breakdown, and algorithm factors*
-
-### Extension Popup
-![Popup Test Tab](assets/screenshots/popup-test-placeholder.png)
-*Test tweets offline and get AI-powered analysis*
-
-### Learn Tab
-![Learn Tab](assets/screenshots/popup-learn-placeholder.png)
-*Algorithm insights based on code analysis and community research*
+Screenshots are coming soon. (The repo currently ships icons in `assets/`, but not marketing screenshots yet.)
 
 ---
 
@@ -72,13 +58,21 @@ A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-
 
 ### Option 1: Download Release (Recommended)
 
-1. Download the latest release from [Releases](https://github.com/affaan-m/x-algorithm-score/releases)
+1. Download the latest release from the GitHub **Releases** page for this repository
 2. Unzip the downloaded file
 3. Open Chrome and navigate to `chrome://extensions/`
 4. Enable **Developer mode** (toggle in top-right corner)
 5. Click **Load unpacked**
 6. Select the unzipped `dist` folder
 7. Navigate to [x.com](https://x.com) and start composing!
+
+### First-run checklist (60 seconds)
+
+1. Pin the extension (puzzle icon → pin “X Algorithm Score”)
+2. Go to [x.com](https://x.com) → click compose
+3. If the overlay doesn’t show, open the popup → **Settings**:
+   - Enable extension
+   - Show score while composing
 
 ### Option 2: Build from Source
 
@@ -121,42 +115,55 @@ Click the extension icon (XS) to open the popup:
 |-----|-------------|
 | **Test** | Score tweets without being on X.com, includes AI analysis |
 | **Learn** | Algorithm insights and tips |
-| **Settings** | Configure API key for AI features |
+| **Settings** | Configure overlay + AI + history |
+
+### Settings
+
+- **Enable extension**: Master on/off
+- **Show score while composing**: Controls the overlay on `x.com`
+- **Show suggestions**: Toggle suggestions UI in the overlay
+- **Minimum score alert**: Shows a warning when score is below your target
+- **Score history (optional)**: If enabled, saves a local entry when you post
+- **Claude API key (optional)**: Enables AI analysis (sends draft text to Anthropic when triggered)
 
 ---
 
 ## Algorithm Insights
 
-This extension is based on analysis of [Twitter's open-sourced algorithm](https://github.com/twitter/the-algorithm) combined with community research (2024-2026).
+This extension provides draft tweet scoring based on analysis of:
+- **[xai-org/x-algorithm](https://github.com/xai-org/x-algorithm)** — X's open-source feed ranking pipeline (2025-2026)
+- **[twitter/the-algorithm](https://github.com/twitter/the-algorithm)** — Initial open-source release (2023)
+- **Community research** — Creator best practices and observed patterns
 
-### Engagement Multipliers (from algorithm code)
+### ✅ Verified from Open-Source Code
 
-| Engagement Type | Multiplier | Notes |
-|-----------------|------------|-------|
-| **Reply-to-Reply** | **75x** | You responding to replies = massive boost |
-| **Direct Replies** | **13.5-27x** | Conversation signals are king |
-| **Quote Tweets** | **>Retweets** | Adds commentary = higher value |
-| **Retweets** | **1-2x** | Simple amplification |
-| **Likes** | **0.5x** | Lowest value engagement |
-| **Bookmarks** | **High** | Shows high-intent interest |
+These insights are directly traceable to `xai-org/x-algorithm`:
 
-### Negative Multipliers (Catastrophic)
+| Insight | Source | Notes |
+|---------|--------|-------|
+| **Multi-Action Prediction** | [README.md](https://raw.githubusercontent.com/xai-org/x-algorithm/main/README.md) | Model predicts P(like), P(reply), P(repost), P(click), P(share), P(block), P(mute), P(report), etc. |
+| **Weighted Score Combination** | [weighted_scorer.rs](https://raw.githubusercontent.com/xai-org/x-algorithm/main/home-mixer/scorers/weighted_scorer.rs) | Final score = Σ(weight × P(action)); positive + negative signals |
+| **Video Duration Gating** | [weighted_scorer.rs](https://raw.githubusercontent.com/xai-org/x-algorithm/main/home-mixer/scorers/weighted_scorer.rs) | Videos must exceed MIN_VIDEO_DURATION_MS for VQV weight |
+| **Author Diversity** | [author_diversity_scorer.rs](https://raw.githubusercontent.com/xai-org/x-algorithm/main/home-mixer/scorers/author_diversity_scorer.rs) | Repeated authors get exponential decay: `(1-floor) × decay^position + floor` |
+| **Out-of-Network Penalty** | [oon_scorer.rs](https://raw.githubusercontent.com/xai-org/x-algorithm/main/home-mixer/scorers/oon_scorer.rs) | OON posts multiplied by `OON_WEIGHT_FACTOR < 1.0` |
+| **Candidate Isolation** | [README.md](https://raw.githubusercontent.com/xai-org/x-algorithm/main/README.md) | Candidates can't attend to each other during ranking |
 
-| Signal | Multiplier | Impact |
-|--------|------------|--------|
-| **Reports** | **-369x** | Account-damaging, persists |
-| **Blocks/Mutes** | **-74x** | Accumulates over time |
-| **"Show less"** | **-74x** | Same as block/mute |
+**Important:** Actual weight values (e.g., `FAVORITE_WEIGHT`, `REPLY_WEIGHT`) are configured in `params` and **not published** in the open-source code.
 
-### Critical Discoveries
+### ⚠️ Heuristic Estimates
 
-| Discovery | Impact |
-|-----------|--------|
-| **Links kill non-Premium reach** | Non-Premium accounts with links get ~0% median engagement |
-| **First 30 minutes critical** | Early engagement velocity determines algorithmic boost |
-| **Native video = 10x** | Native video gets 10x engagement vs text-only |
-| **Dwell time: 3 seconds** | Users must stay >3 seconds or quality score drops |
-| **Positive sentiment boost** | Grok AI scores tone - positive content distributed further |
+These insights are based on community research and observed patterns, **not directly verifiable** from open-source code:
+
+| Insight | Type | Notes |
+|---------|------|-------|
+| **Reply engagement value** | Community observation | Replies appear to drive more reach than likes |
+| **Video engagement boost** | Best practice | Native videos typically show higher engagement |
+| **External link penalties** | Community observation | Links may reduce reach, especially for non-Premium |
+| **Question effectiveness** | Best practice | Questions tend to generate reply engagement |
+| **Dwell time thresholds** | Inference | Dwell scoring exists but thresholds not public |
+| **Timing windows** | Best practice | Peak hours based on general social media patterns |
+
+See [INSIGHTS_AUDIT.md](INSIGHTS_AUDIT.md) for full source attribution and methodology.
 
 ---
 
@@ -178,7 +185,7 @@ Enable deep analysis with Claude AI for enhanced feedback:
 - **Rewrite Suggestions** — AI-generated improvements
 - **Audience Analysis** — Who your tweet appeals to
 
-> **Note**: API key is stored locally. All analysis happens client-side.
+> **Note**: When you click the AI analysis button, your draft tweet text is sent to the Anthropic API using your locally-stored API key. The base score and suggestions are computed locally. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ---
 
@@ -257,11 +264,17 @@ npm run dev
 # Production build
 npm run build
 
+# Run tests
+npm run test
+
 # Type checking
 npm run type-check
 
 # Linting
 npm run lint
+
+# Full quality gate (typecheck + lint + test + build)
+npm run check
 ```
 
 ### Project Structure
@@ -283,21 +296,27 @@ src/
 
 ## Roadmap
 
-### v0.2.0
-- [ ] Timeline tweet scoring (show scores on existing tweets)
-- [ ] Score history tracking
-- [ ] User context integration (follower count, engagement rate)
+### v0.2.0 ✅ Complete
+- [x] Timeline tweet scoring (show scores on existing tweets)
+- [x] Score history tracking with export to CSV
+- [x] User context integration (follower count, engagement rate)
 
-### v0.3.0
-- [ ] Thread composer with per-tweet scoring
-- [ ] Optimal posting time suggestions
+### v0.3.0 ✅ Complete
+- [x] Thread composer with per-tweet scoring
+- [x] Optimal posting time suggestions
+- [x] Analytics dashboard with trends and insights
+- [x] A/B testing variant generator
+
+### v0.4.0 (Planned)
 - [ ] Chrome Web Store release
+- [ ] Enhanced timeline scoring with filters
+- [ ] Historical performance tracking
 
 ### Future
 - [ ] Firefox support
 - [ ] Safari support
-- [ ] Analytics dashboard
-- [ ] A/B testing suggestions
+- [ ] Advanced analytics with A/B test results
+- [ ] Automated best time scheduler
 
 ---
 
@@ -310,6 +329,8 @@ Contributions are welcome! Please:
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local dev setup and guidelines.
 
 ### Understanding the Scoring
 

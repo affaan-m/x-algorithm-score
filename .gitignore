@@ -21,3 +21,9 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Development Tools
+.claude/
+.cursor/
+_bmad/
+_bmad-output/
