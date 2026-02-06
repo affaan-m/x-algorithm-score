@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:clean": "rm -rf dist && npm run build",
+    "package": "npm run build:clean && cd dist && rm -rf .vite && zip -r ../x-algorithm-score.zip . -x '*.DS_Store'",
     "preview": "vite preview",
     "lint": "eslint src --ext ts,tsx",
     "type-check": "tsc --noEmit"
