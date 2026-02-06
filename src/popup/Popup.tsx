@@ -262,6 +262,50 @@ function TestTab({ text, setText, hasMedia, setHasMedia, score, aiAnalysis, isAn
             </div>
           )}
 
+          {/* Controversy Risk */}
+          {score.controversyRisk && (
+            <div style={{ marginTop: '12px' }}>
+              <div style={{
+                padding: '12px',
+                backgroundColor: score.controversyRisk.riskLevel === 'dangerous' ? '#450A0A' :
+                                score.controversyRisk.riskLevel === 'risky' ? '#431407' :
+                                score.controversyRisk.riskLevel === 'caution' ? '#422006' : '#1E2732',
+                borderRadius: '8px',
+                border: `1px solid ${
+                  score.controversyRisk.riskLevel === 'dangerous' ? '#DC2626' :
+                  score.controversyRisk.riskLevel === 'risky' ? '#EA580C' :
+                  score.controversyRisk.riskLevel === 'caution' ? '#CA8A04' : '#38444D'
+                }`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>
+                    {score.controversyRisk.riskLevel === 'dangerous' ? '🚨' :
+                     score.controversyRisk.riskLevel === 'risky' ? '⚠️' : '⚡'}
+                  </span>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: score.controversyRisk.riskLevel === 'dangerous' ? '#FCA5A5' :
+                           score.controversyRisk.riskLevel === 'risky' ? '#FDBA74' : '#FDE047',
+                  }}>
+                    Controversy Risk: {score.controversyRisk.riskLevel.charAt(0).toUpperCase() + score.controversyRisk.riskLevel.slice(1)}
+                  </span>
+                </div>
+                {score.controversyRisk.warnings.slice(0, 2).map((w, i) => (
+                  <div key={i} style={{
+                    fontSize: '11px',
+                    color: '#D1D5DB',
+                    marginBottom: i < score.controversyRisk!.warnings.length - 1 ? '6px' : 0,
+                    paddingLeft: '24px',
+                  }}>
+                    <div style={{ fontWeight: '500' }}>{w.message}</div>
+                    <div style={{ color: '#9CA3AF', marginTop: '2px' }}>{w.detail}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* AI Analysis Button */}
           <button
             onClick={onAnalyze}

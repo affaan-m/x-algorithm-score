@@ -137,6 +137,39 @@ export function ScoreOverlay({ score, isVisible }: ScoreOverlayProps): JSX.Eleme
             )}
           </div>
 
+          {/* Controversy Risk Banner */}
+          {score.controversyRisk && (
+            <div
+              style={{
+                padding: '10px 12px',
+                borderTop: '1px solid #38444D',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                backgroundColor: score.controversyRisk.riskLevel === 'dangerous' ? '#450A0A' :
+                                score.controversyRisk.riskLevel === 'risky' ? '#431407' : 'transparent',
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>
+                {score.controversyRisk.riskLevel === 'dangerous' ? '🚨' :
+                 score.controversyRisk.riskLevel === 'risky' ? '⚠️' : '⚡'}
+              </span>
+              <div style={{ fontSize: '11px' }}>
+                <span style={{
+                  fontWeight: '600',
+                  color: score.controversyRisk.riskLevel === 'dangerous' ? '#FCA5A5' :
+                         score.controversyRisk.riskLevel === 'risky' ? '#FDBA74' : '#FDE047',
+                }}>
+                  {score.controversyRisk.riskLevel === 'dangerous' ? 'High scandal risk' :
+                   score.controversyRisk.riskLevel === 'risky' ? 'Controversy detected' : 'Minor risk flags'}
+                </span>
+                <span style={{ color: '#8899A6' }}>
+                  {' '}&mdash; {score.controversyRisk.warnings[0]?.detail.split('.')[0]}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Predicted Reach */}
           <div
             style={{

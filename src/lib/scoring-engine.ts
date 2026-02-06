@@ -39,8 +39,8 @@ import {
   Suggestion,
   ReachPrediction,
   AlgorithmFactor,
-  // DEFAULT_WEIGHTS will be used when implementing personalized scoring
 } from '../types';
+import { scanForControversy } from './scandal-detector';
 
 // Character count thresholds
 const OPTIMAL_MIN_LENGTH = 71;
@@ -272,7 +272,7 @@ function calculateMediaScore(tweet: DraftTweet): number {
  * Calculate timing score (0-15)
  * Based on optimal posting times and user's follower activity
  */
-function calculateTimingScore(userContext?: UserContext): number {
+function calculateTimingScore(_userContext?: UserContext): number {
   const now = new Date();
   const hour = now.getUTCHours();
   const dayOfWeek = now.getDay();
@@ -293,11 +293,6 @@ function calculateTimingScore(userContext?: UserContext): number {
   // Weekday vs weekend (weekdays typically better for business content)
   if (dayOfWeek >= 1 && dayOfWeek <= 5) {
     score += 2;
-  }
-
-  // TODO: Use userContext.followerTimezones for personalized timing
-  if (userContext?.followerTimezones) {
-    // Future: Calculate optimal time based on follower distribution
   }
 
   return Math.min(15, score);
@@ -376,6 +371,10 @@ function calculateRiskScore(tweet: DraftTweet, isPremium: boolean = false): numb
   if (sentiment === 'negative') {
     penalty += 3; // Negative tone reduces distribution
   }
+
+  // Controversy risk (reports = -369x, blocks = -74x)
+  const controversy = scanForControversy(tweet.text);
+  penalty += Math.min(10, controversy.totalPenalty);
 
   return Math.min(30, penalty);
 }
@@ -505,6 +504,19 @@ function generateSuggestions(
       category: 'engagement',
       message: 'Positive tone detected - good for distribution',
       impact: 'low',
+    });
+  }
+
+  // Controversy risk warnings
+  const controversy = scanForControversy(tweet.text);
+  if (controversy.warnings.length > 0) {
+    const topWarning = controversy.warnings[0];
+    suggestions.push({
+      type: 'negative',
+      category: 'risk',
+      message: `Controversy risk: ${topWarning.message}`,
+      impact: topWarning.severity === 'critical' || topWarning.severity === 'high' ? 'high' : 'medium',
+      action: topWarning.detail,
     });
   }
 
@@ -638,6 +650,7 @@ export function scoreTweet(
   const suggestions = generateSuggestions(tweet, breakdown, isPremium);
   const algorithmFactors = generateAlgorithmFactors(tweet, breakdown);
   const predictedReach = calculatePredictedReach(normalizedScore, userContext);
+  const controversy = scanForControversy(tweet.text);
 
   return {
     overall: normalizedScore,
@@ -646,6 +659,16 @@ export function scoreTweet(
     suggestions,
     predictedReach,
     algorithmFactors,
+    controversyRisk: controversy.warnings.length > 0 ? {
+      riskLevel: controversy.riskLevel,
+      riskScore: controversy.riskScore,
+      warnings: controversy.warnings.map(w => ({
+        category: w.category,
+        severity: w.severity,
+        message: w.message,
+        detail: w.detail,
+      })),
+    } : undefined,
   };
 }
 

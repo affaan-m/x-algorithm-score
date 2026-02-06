@@ -111,6 +111,15 @@ function detectQuoteTweet(): boolean {
 }
 
 /**
+ * Detect thread length by counting composer textareas
+ * X uses tweetTextarea_0, tweetTextarea_1, etc. for thread tweets
+ */
+function detectThreadLength(): number {
+  const textareas = document.querySelectorAll('[data-testid^="tweetTextarea_"]');
+  return Math.max(1, textareas.length);
+}
+
+/**
  * Analyze the current draft tweet
  */
 function analyzeDraft(text: string): void {
@@ -123,7 +132,7 @@ function analyzeDraft(text: string): void {
     mediaType,
     mediaCount,
     isThread: features.isThread || false,
-    threadLength: 1, // TODO: Detect thread length
+    threadLength: detectThreadLength(),
     hasQuestion: features.hasQuestion || false,
     externalLinks: features.externalLinks || 0,
     hashtags: features.hashtags || 0,

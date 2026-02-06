@@ -49,6 +49,11 @@ export interface TweetScore {
   suggestions: Suggestion[];
   predictedReach: ReachPrediction;
   algorithmFactors: AlgorithmFactor[];
+  controversyRisk?: {
+    riskLevel: 'safe' | 'caution' | 'risky' | 'dangerous';
+    riskScore: number;
+    warnings: { category: string; severity: string; message: string; detail: string }[];
+  };
 }
 
 export interface Suggestion {
