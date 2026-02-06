@@ -9,8 +9,6 @@
 
 A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-sourced algorithm, providing instant scoring, actionable suggestions, and predicted reach estimates.
 
-![X Algorithm Score Banner](assets/screenshots/banner-placeholder.png)
-
 ---
 
 ## Table of Contents
@@ -50,21 +48,11 @@ A Chrome extension that analyzes your draft tweets against X's (Twitter's) open-
 
 ## Screenshots
 
-### Score Overlay (Collapsed)
-![Score Badge](assets/screenshots/score-badge-placeholder.png)
-*The score badge appears in the bottom-right corner while composing*
+> Screenshots pending — load the extension and visit x.com to see the UI in action.
 
-### Score Overlay (Expanded)
-![Score Expanded](assets/screenshots/score-expanded-placeholder.png)
-*Click to expand and see suggestions, breakdown, and algorithm factors*
+**Score Overlay**: A floating badge appears bottom-right while composing tweets. Click to expand into a full panel with suggestions, score breakdown, and algorithm factor analysis.
 
-### Extension Popup
-![Popup Test Tab](assets/screenshots/popup-test-placeholder.png)
-*Test tweets offline and get AI-powered analysis*
-
-### Learn Tab
-![Learn Tab](assets/screenshots/popup-learn-placeholder.png)
-*Algorithm insights based on code analysis and community research*
+**Extension Popup**: Click the toolbar icon to access the Test tab (score drafts offline with AI analysis), Learn tab (8 algorithm insight cards), and Settings tab (API key, preferences).
 
 ---
 
@@ -98,7 +86,12 @@ npm run build
 
 ### Option 3: Chrome Web Store
 
-Coming soon!
+Coming soon! In the meantime, you can package the extension for sideloading:
+
+```bash
+npm run package
+# Creates x-algorithm-score.zip ready for CWS upload
+```
 
 ---
 
@@ -256,6 +249,12 @@ npm run dev
 
 # Production build
 npm run build
+
+# Clean build (removes dist/ first)
+npm run build:clean
+
+# Package for Chrome Web Store (builds + creates zip)
+npm run package
 
 # Type checking
 npm run type-check
